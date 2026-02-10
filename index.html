@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informal Loans Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .card .currency {
+            font-size: 0.6em;
+            color: #999;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .controls button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .controls button:hover {
+            background: #764ba2;
+        }
+
+        .controls button.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .controls button.secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .sort-select {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #667eea;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+
+        .strategy-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: #333;
+        }
+
+        .strategy-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .strategy-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .strategy-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .strategy-list li strong {
+            color: #764ba2;
+        }
+
+        .strategy-list li:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            .table-wrapper {
+                overflow-x: auto;
+            }
+            table {
+                font-size: 0.9em;
+            }
+            td, th {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Informal Loans Tracker</h1>
+            <p>Manage and track all your informal loans with real-time calculations</p>
+        </header>
+
+        <div class="summary-cards">
+            <div class="card">
+                <h3>Total Loans</h3>
+                <div class="value"><span id="totalLoans">0</span></div>
+            </div>
+            <div class="card">
+                <h3>Total Principal</h3>
+                <div class="value"><span class="currency">₹</span> <span id="totalPrincipal">0</span></div>
+            </div>
+            <div class="card">
+                <h3>Total Amount Left</h3>
+                <div class="value"><span class="currency">₹</span> <span id="totalAmountLeft">0</span></div>
+            </div>
+            <div class="card">
+                <h3>Monthly Interest</h3>
+                <div class="value"><span class="currency">₹</span> <span id="totalMonthlyInterest">0</span></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="addLoanRow()">+ Add New Loan</button>
+            <select class="sort-select" id="sortSelect" onchange="sortLoans()">
+                <option value="none">Sort by...</option>
+                <option value="interest-high">Interest (Highest First)</option>
+                <option value="interest-low">Interest (Lowest First)</option>
+                <option value="amount-high">Amount Left (Highest First)</option>
+                <option value="amount-low">Amount Left (Lowest First)</option>
+            </select>
+            <button class="secondary" onclick="exportData()">📤 Export Data</button>
+            <button class="secondary" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            <button class="secondary" onclick="clearAllData()">Clear All Data</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Loan #</th>
+                        <th>Lender Name</th>
+                        <th>Principal (₹)</th>
+                        <th>Interest Rate (% p.a.)</th>
+                        <th>Amount Left (₹)</th>
+                        <th>Monthly Interest (₹)</th>
+                        <th>Total Paid (₹)</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="loansTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="strategy-section">
+            <h2>📊 Debt Payoff Strategy</h2>
+            <p style="margin-bottom: 15px;">Here's your strategy to clear all informal loans efficiently:</p>
+            <ul class="strategy-list">
+                <li><strong>Option 1: Highest Interest First</strong><br>Pay off loans with highest interest rates first. This saves you the most money long-term (mathematically optimal).</li>
+                <li><strong>Option 2: Smallest Balance First</strong><br>Pay off loans with smallest remaining amounts first. Quick psychological wins keep you motivated.</li>
+                <li><strong>Option 3: Hybrid Approach</strong><br>Combine both - pay high-interest small loans first, then tackle large high-interest loans.</li>
+                <li><strong>Monthly Action:</strong> Use the sort feature above to reorganize your loans by strategy, then commit to paying extra towards your #1 priority loan each month.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const defaultLoans = [
+            { lenderName: "Lender 1", principal: 30000, interestRate: 12, amountLeft: 29000, totalPaid: 1000, status: "Active" },
+            { lenderName: "Lender 2", principal: 50000, interestRate: 15, amountLeft: 50000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 3", principal: 75000, interestRate: 18, amountLeft: 75000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 4", principal: 100000, interestRate: 12, amountLeft: 100000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 5", principal: 147000, interestRate: 18, amountLeft: 154000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 6", principal: 157000, interestRate: 12, amountLeft: 157000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 7", principal: 200000, interestRate: 15, amountLeft: 200000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 8", principal: 200000, interestRate: 12, amountLeft: 200000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 9", principal: 250000, interestRate: 18, amountLeft: 250000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 10", principal: 469000, interestRate: 15, amountLeft: 469000, totalPaid: 0, status: "Active" }
+        ];
+
+        let loans = loadLoans();
+
+        function loadLoans() {
+            const saved = localStorage.getItem('informalLoans');
+            return saved ? JSON.parse(saved) : defaultLoans;
+        }
+
+        function saveLoans() {
+            localStorage.setItem('informalLoans', JSON.stringify(loans));
+        }
+
+        function calculateMonthlyInterest(amountLeft, interestRate) {
+            return (amountLeft * interestRate / 12 / 100).toFixed(0);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('loansTableBody');
+            tbody.innerHTML = '';
+
+            loans.forEach((loan, index) => {
+                const monthlyInterest = calculateMonthlyInterest(loan.amountLeft, loan.interestRate);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><input type="text" value="${loan.lenderName}" onchange="updateLoan(${index}, 'lenderName', this.value)"></td>
+                    <td><input type="number" value="${loan.principal}" onchange="updateLoan(${index}, 'principal', parseFloat(this.value))"></td>
+                    <td><input type="number" value="${loan.interestRate}" step="0.1" onchange="updateLoan(${index}, 'interestRate', parseFloat(this.value))"></td>
+                    <td><input type="number" value="${loan.amountLeft}" onchange="updateLoan(${index}, 'amountLeft', parseFloat(this.value))"></td>
+                    <td style="color: #667eea; font-weight: bold;">₹${monthlyInterest.toLocaleString('en-IN')}</td>
+                    <td><input type="number" value="${loan.totalPaid}" onchange="updateLoan(${index}, 'totalPaid', parseFloat(this.value))"></td>
+                    <td>
+                        <select onchange="updateLoan(${index}, 'status', this.value)">
+                            <option value="Active" ${loan.status === 'Active' ? 'selected' : ''}>Active</option>
+                            <option value="Paid Off" ${loan.status === 'Paid Off' ? 'selected' : ''}>Paid Off</option>
+                        </select>
+                    </td>
+                    <td><button class="delete-btn" onclick="deleteLoan(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            updateSummary();
+            saveLoans();
+        }
+
+        function updateLoan(index, field, value) {
+            loans[index][field] = value;
+            renderTable();
+        }
+
+        function deleteLoan(index) {
+            loans.splice(index, 1);
+            renderTable();
+        }
+
+        function addLoanRow() {
+            loans.push({
+                lenderName: "New Lender",
+                principal: 0,
+                interestRate: 12,
+                amountLeft: 0,
+                totalPaid: 0,
+                status: "Active"
+            });
+            renderTable();
+        }
+
+        function updateSummary() {
+            const totalLoans = loans.length;
+            const totalPrincipal = loans.reduce((sum, l) => sum + l.principal, 0);
+            const totalAmountLeft = loans.reduce((sum, l) => sum + l.amountLeft, 0);
+            const totalMonthlyInterest = loans.reduce((sum, l) => sum + parseFloat(calculateMonthlyInterest(l.amountLeft, l.interestRate)), 0);
+
+            document.getElementById('totalLoans').textContent = totalLoans;
+            document.getElementById('totalPrincipal').textContent = totalPrincipal.toLocaleString('en-IN');
+            document.getElementById('totalAmountLeft').textContent = totalAmountLeft.toLocaleString('en-IN');
+            document.getElementById('totalMonthlyInterest').textContent = totalMonthlyInterest.toLocaleString('en-IN');
+        }
+
+        function sortLoans() {
+            const sortBy = document.getElementById('sortSelect').value;
+
+            if (sortBy === 'interest-high') {
+                loans.sort((a, b) => b.interestRate - a.interestRate);
+            } else if (sortBy === 'interest-low') {
+                loans.sort((a, b) => a.interestRate - b.interestRate);
+            } else if (sortBy === 'amount-high') {
+                loans.sort((a, b) => b.amountLeft - a.amountLeft);
+            } else if (sortBy === 'amount-low') {
+                loans.sort((a, b) => a.amountLeft - b.amountLeft);
+            }
+
+            renderTable();
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure? This will delete all loan data.')) {
+                loans = [];
+                localStorage.removeItem('informalLoans');
+                renderTable();
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(loans, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'loans_data.json');
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedLoans = JSON.parse(e.target.result);
+                    loans = importedLoans;
+                    renderTable();
+                    alert('Data imported successfully!');
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        renderTable();
+    </script>
+</body>
+</html>
