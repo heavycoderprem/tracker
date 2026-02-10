@@ -158,6 +158,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 0.95em;
+            min-width: 80px;
         }
 
         input[type="text"]:focus,
@@ -227,6 +228,12 @@
             td, th {
                 padding: 10px;
             }
+            input[type="text"],
+            input[type="number"],
+            select {
+                min-width: 100px;
+                font-size: 1em;
+            }
         }
     </style>
 </head>
@@ -278,7 +285,8 @@
                         <th>Loan #</th>
                         <th>Lender Name</th>
                         <th>Principal (₹)</th>
-                        <th>Interest Rate (% p.a.)</th>
+                        <th>Interest Rate (%)</th>
+                        <th>Interest Type</th>
                         <th>Amount Left (₹)</th>
                         <th>Monthly Interest (₹)</th>
                         <th>Total Paid (₹)</th>
@@ -305,16 +313,16 @@
 
     <script>
         const defaultLoans = [
-            { lenderName: "Lender 1", principal: 30000, interestRate: 12, amountLeft: 29000, totalPaid: 1000, status: "Active" },
-            { lenderName: "Lender 2", principal: 50000, interestRate: 15, amountLeft: 50000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 3", principal: 75000, interestRate: 18, amountLeft: 75000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 4", principal: 100000, interestRate: 12, amountLeft: 100000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 5", principal: 147000, interestRate: 18, amountLeft: 154000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 6", principal: 157000, interestRate: 12, amountLeft: 157000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 7", principal: 200000, interestRate: 15, amountLeft: 200000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 8", principal: 200000, interestRate: 12, amountLeft: 200000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 9", principal: 250000, interestRate: 18, amountLeft: 250000, totalPaid: 0, status: "Active" },
-            { lenderName: "Lender 10", principal: 469000, interestRate: 15, amountLeft: 469000, totalPaid: 0, status: "Active" }
+            { lenderName: "Lender 1", principal: 30000, interestRate: 12, interestType: "annual", amountLeft: 29000, totalPaid: 1000, status: "Active" },
+            { lenderName: "Lender 2", principal: 50000, interestRate: 15, interestType: "annual", amountLeft: 50000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 3", principal: 75000, interestRate: 18, interestType: "annual", amountLeft: 75000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 4", principal: 100000, interestRate: 12, interestType: "annual", amountLeft: 100000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 5", principal: 147000, interestRate: 18, interestType: "annual", amountLeft: 154000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 6", principal: 157000, interestRate: 12, interestType: "annual", amountLeft: 157000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 7", principal: 200000, interestRate: 15, interestType: "annual", amountLeft: 200000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 8", principal: 200000, interestRate: 12, interestType: "annual", amountLeft: 200000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 9", principal: 250000, interestRate: 18, interestType: "annual", amountLeft: 250000, totalPaid: 0, status: "Active" },
+            { lenderName: "Lender 10", principal: 469000, interestRate: 15, interestType: "annual", amountLeft: 469000, totalPaid: 0, status: "Active" }
         ];
 
         let loans = loadLoans();
@@ -328,8 +336,12 @@
             localStorage.setItem('informalLoans', JSON.stringify(loans));
         }
 
-        function calculateMonthlyInterest(amountLeft, interestRate) {
-            return (amountLeft * interestRate / 12 / 100).toFixed(0);
+        function calculateMonthlyInterest(amountLeft, interestRate, interestType) {
+            if (interestType === "monthly") {
+                return (amountLeft * interestRate / 100).toFixed(0);
+            } else {
+                return (amountLeft * interestRate / 12 / 100).toFixed(0);
+            }
         }
 
         function renderTable() {
@@ -337,13 +349,24 @@
             tbody.innerHTML = '';
 
             loans.forEach((loan, index) => {
-                const monthlyInterest = calculateMonthlyInterest(loan.amountLeft, loan.interestRate);
+                // Add interestType if it doesn't exist (for backward compatibility)
+                if (!loan.interestType) {
+                    loan.interestType = "annual";
+                }
+                
+                const monthlyInterest = calculateMonthlyInterest(loan.amountLeft, loan.interestRate, loan.interestType);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td><input type="text" value="${loan.lenderName}" onchange="updateLoan(${index}, 'lenderName', this.value)"></td>
                     <td><input type="number" value="${loan.principal}" onchange="updateLoan(${index}, 'principal', parseFloat(this.value))"></td>
                     <td><input type="number" value="${loan.interestRate}" step="0.1" onchange="updateLoan(${index}, 'interestRate', parseFloat(this.value))"></td>
+                    <td>
+                        <select onchange="updateLoan(${index}, 'interestType', this.value)">
+                            <option value="annual" ${loan.interestType === 'annual' ? 'selected' : ''}>Annual</option>
+                            <option value="monthly" ${loan.interestType === 'monthly' ? 'selected' : ''}>Monthly</option>
+                        </select>
+                    </td>
                     <td><input type="number" value="${loan.amountLeft}" onchange="updateLoan(${index}, 'amountLeft', parseFloat(this.value))"></td>
                     <td style="color: #667eea; font-weight: bold;">₹${monthlyInterest.toLocaleString('en-IN')}</td>
                     <td><input type="number" value="${loan.totalPaid}" onchange="updateLoan(${index}, 'totalPaid', parseFloat(this.value))"></td>
@@ -377,6 +400,7 @@
                 lenderName: "New Lender",
                 principal: 0,
                 interestRate: 12,
+                interestType: "annual",
                 amountLeft: 0,
                 totalPaid: 0,
                 status: "Active"
@@ -388,7 +412,10 @@
             const totalLoans = loans.length;
             const totalPrincipal = loans.reduce((sum, l) => sum + l.principal, 0);
             const totalAmountLeft = loans.reduce((sum, l) => sum + l.amountLeft, 0);
-            const totalMonthlyInterest = loans.reduce((sum, l) => sum + parseFloat(calculateMonthlyInterest(l.amountLeft, l.interestRate)), 0);
+            const totalMonthlyInterest = loans.reduce((sum, l) => {
+                const interestType = l.interestType || "annual";
+                return sum + parseFloat(calculateMonthlyInterest(l.amountLeft, l.interestRate, interestType));
+            }, 0);
 
             document.getElementById('totalLoans').textContent = totalLoans;
             document.getElementById('totalPrincipal').textContent = totalPrincipal.toLocaleString('en-IN');
